@@ -81,7 +81,7 @@ class DisplayThread(threading.Thread):
     def run(self):
         cv2.namedWindow("display", cv2.WINDOW_NORMAL)
         cv2.setMouseCallback("display", self.opencv_calibration_node.on_mouse)
-        cv2.createTrackbar("Camera type: \n 0 : pinhole \n 1 : fisheye", "display", 0,1, self.opencv_calibration_node.on_model_change)
+        cv2.createTrackbar("Camera type: \n 0 : pinhole \n 1 : fisheye \n 2 : omnidir", "display", 0,2, self.opencv_calibration_node.on_model_change)
         cv2.createTrackbar("scale", "display", 0, 100, self.opencv_calibration_node.on_scale)
 
         while True:
@@ -277,7 +277,12 @@ class OpenCVCalibrationNode(CalibrationNode):
                     if self.do_upload():
                         rospy.signal_shutdown('Quit')
     def on_model_change(self, model_select_val):
-        self.c.set_cammodel( CAMERA_MODEL.PINHOLE if model_select_val < 0.5 else CAMERA_MODEL.FISHEYE)
+        if(model_select_val < 0.66):
+            self.c.set_cammodel(CAMERA_MODEL.PINHOLE)
+        elif(model_select_val<1.3):
+            self.c.set_cammodel(CAMERA_MODEL.FISHEYE)
+        else:
+            self.c.set_cammodel(CAMERA_MODEL.OMNIDIR)
 
     def on_scale(self, scalevalue):
         if self.c.calibrated:
