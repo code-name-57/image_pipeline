@@ -123,10 +123,22 @@ def main():
     group.add_option("--fisheye-k-coefficients",
                      type="int", default=4, metavar="NUM_COEFFS",
                      help="for fisheye, number of radial distortion coefficients to use fixing to zero the rest (up to 4, default %default)")
-
     group.add_option("--fisheye-check-conditions",
                      action="store_true", default=False,
                      help="for fisheye, the functions will check validity of condition number")
+
+    group.add_option("--omnidir-fix-skew",
+                     action="store_true", default=False,
+                     help="for omnidir, skew coefficient (alpha) is set to zero and stay zero")
+    group.add_option("--omnidir-fix-center",
+                     action="store_true", default=False,
+                     help="for omnidir,fix the principal point at the image center")
+    group.add_option("--omnidir-fix-gamma",
+                     action="store_true", default=False,
+                     help="for omnidir,fix the gamma")
+    group.add_option("--omnidir-k-coefficients",
+                     type="int", default=5, metavar="NUM_COEFFS",
+                     help="for omnidir, number of radial distortion coefficients to use fixing to zero the rest (up to 4, default %default)")
 
     group.add_option("--disable_calib_cb_fast_check", action='store_true', default=False,
                      help="uses the CALIB_CB_FAST_CHECK flag for findChessboardCorners")
@@ -185,7 +197,7 @@ def main():
     if (num_ks < 1):
         calib_flags |= cv2.CALIB_FIX_K1
 
-    # Opencv calibration flags parsing:
+    # Fisheye Opencv calibration flags parsing:
     num_ks = options.fisheye_k_coefficients
     fisheye_calib_flags = 0
     if options.fisheye_fix_principal_point:
@@ -204,6 +216,26 @@ def main():
         fisheye_calib_flags |= cv2.fisheye.CALIB_FIX_K2
     if (num_ks < 1):
         fisheye_calib_flags |= cv2.fisheye.CALIB_FIX_K1
+
+    # Omnidir OpenCV calibration flags parsing
+    num_ks = options.omnidir_k_coefficients
+    omnidir_calib_flags = 0
+    if options.omnidir_fix_center:
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_CENTER
+    if options.omnidir_fix_skew:
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_SKEW
+    if options.omnidir_fix_gamma:
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_GAMMA
+    if (num_ks < 5):
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_XI
+    if (num_ks < 4):
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_P2
+    if (num_ks < 3):
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_P1
+    if (num_ks < 2):
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_K2
+    if (num_ks < 1):
+        omnidir_calib_flags |= cv2.omnidir.CALIB_FIX_K1
 
     pattern = Patterns.Chessboard
     if options.pattern == 'circles':
