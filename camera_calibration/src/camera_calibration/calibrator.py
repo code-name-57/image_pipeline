@@ -51,6 +51,7 @@ from enum import Enum
 class CAMERA_MODEL(Enum):
     PINHOLE = 0
     FISHEYE = 1
+    OMNIDIR = 2
 
 # Supported calibration patterns
 class Patterns:
@@ -296,6 +297,8 @@ def _get_dist_model(dist_params, cam_model):
             dist_model = "plumb_bob"
     elif CAMERA_MODEL.FISHEYE == cam_model:
         dist_model = "equidistant"
+    elif CAMERA_MODEL.OMNIDIR == cam_model:
+        dist_model = "omnidir"
     else:
         dist_model = "unknown"
     return dist_model
@@ -305,7 +308,7 @@ class Calibrator():
     """
     Base class for calibration system
     """
-    def __init__(self, boards, flags=0, fisheye_flags = 0, pattern=Patterns.Chessboard, name='',
+    def __init__(self, boards, flags=0, fisheye_flags = 0, omnidir_flags = 0, pattern=Patterns.Chessboard, name='',
     checkerboard_flags=cv2.CALIB_CB_FAST_CHECK, max_chessboard_speed = -1.0):
         # Ordering the dimensions for the different detectors is actually a minefield...
         if pattern == Patterns.Chessboard:
@@ -324,6 +327,7 @@ class Calibrator():
         self.calibrated = False
         self.calib_flags = flags
         self.fisheye_calib_flags = fisheye_flags
+        self.omnidir_calib_flags = omnidir_flags
         self.checkerboard_flags = checkerboard_flags
         self.pattern = pattern
         self.br = cv_bridge.CvBridge()
@@ -790,7 +794,11 @@ class MonoCalibrator(Calibrator):
             reproj_err, self.intrinsics, self.distortion, rvecs, tvecs = cv2.fisheye.calibrate(
                 opts, ipts, self.size,
                 intrinsics_in, None, flags = self.fisheye_calib_flags)
-
+        elif self.camera_model == CAMERA_MODEL.OMNIDIR:
+            print("mono omnidir calibration")
+            reproj_err, self.intrinsics, self.distortion, rvecs, tvecs = cv2.omnidir.calibrate(
+                opts, ipts, self.size, intrinsics_in, 
+                None, flags = self.omnidir_calib_flags)
         # R is identity matrix for monocular calibration
         self.R = numpy.eye(3, dtype=numpy.float64)
         self.P = numpy.zeros((3, 4), dtype=numpy.float64)
@@ -820,7 +828,9 @@ class MonoCalibrator(Calibrator):
             self.P[0,0] /= (1. + a)
             self.P[1,1] /= (1. + a)
             self.mapx, self.mapy = cv2.fisheye.initUndistortRectifyMap(self.intrinsics, self.distortion, self.R, self.P, self.size, cv2.CV_32FC1)
-
+        elif self.camera_model == CAMERA_MODEL.OMNIDIR:
+            self.mapx, self.mapy = cv2.omnidir.initUndistortRectifyMap(self.intrinsics, self.distortion, self.R, self.P, self.size, cv2.CV_32FC1)
+            
 
     def remap(self, src):
         """
