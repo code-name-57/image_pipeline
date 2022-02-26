@@ -801,7 +801,8 @@ class MonoCalibrator(Calibrator):
             ipts = ipts64
             opts64 = numpy.asarray(opts, dtype=numpy.float32)
             opts = opts64
-            reproj_err, self.intrinsics, _, self.distortion, rvecs, tvecs = cv2.omnidir.calibrate(
+            self.Xi = None
+            reproj_err, self.intrinsics, self.Xi, self.distortion, rvecs, tvecs, idx = cv2.omnidir.calibrate(
                 opts, ipts, self.size, K=None, 
                 xi=None, D=None, flags = self.omnidir_calib_flags, criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 1e-6))
 
@@ -835,7 +836,7 @@ class MonoCalibrator(Calibrator):
             self.P[1,1] /= (1. + a)
             self.mapx, self.mapy = cv2.fisheye.initUndistortRectifyMap(self.intrinsics, self.distortion, self.R, self.P, self.size, cv2.CV_32FC1)
         elif self.camera_model == CAMERA_MODEL.OMNIDIR:
-            self.mapx, self.mapy = cv2.omnidir.initUndistortRectifyMap(self.intrinsics, self.distortion, self.R, self.P, self.size, cv2.CV_32FC1)
+            self.mapx, self.mapy = cv2.omnidir.initUndistortRectifyMap(self.intrinsics, self.distortion, self.Xi, self.R, self.P, self.size, cv2.CV_32FC1, cv2.omnidir.RECTIFY_PERSPECTIVE)
             
 
     def remap(self, src):
@@ -858,6 +859,8 @@ class MonoCalibrator(Calibrator):
             return cv2.undistortPoints(src, self.intrinsics, self.distortion, R = self.R, P = self.P)
         elif self.camera_model == CAMERA_MODEL.FISHEYE:
             return cv2.fisheye.undistortPoints(src, self.intrinsics, self.distortion, R = self.R, P = self.P)
+        elif self.camera_model == CAMERA_MODEL.OMNIDIR:
+            return cv2.omnidir.undistortPoints(src, self.intrinsics, self.distortion, self.Xi, self.R)
 
     def as_message(self):
         """ Return the camera calibration as a CameraInfo message """
