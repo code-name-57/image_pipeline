@@ -40,6 +40,7 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <image_geometry/pinhole_camera_model.h>
+#include <opencv2/calib3d/calib3d.hpp>
 #include <boost/thread.hpp>
 #include <depth_image_proc/depth_traits.h>
 
@@ -155,7 +156,7 @@ namespace depth_image_proc {
 
 	// Synchronize inputs. Topic subscriptions happen on demand in the connection callback.
 	sync_.reset( new Synchronizer(SyncPolicy(queue_size_), sub_depth_, sub_intensity_, sub_info_) );
-	sync_->registerCallback(boost::bind(&PointCloudXyziRadialNodelet::imageCb, this, _1, _2, _3));
+	sync_->registerCallback(boost::bind(&PointCloudXyziRadialNodelet::imageCb, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
     
 	// Monitor whether anyone is subscribed to the output
 	ros::SubscriberStatusCallback connect_cb = 
