@@ -796,9 +796,15 @@ class MonoCalibrator(Calibrator):
                 intrinsics_in, None, flags = self.fisheye_calib_flags)
         elif self.camera_model == CAMERA_MODEL.OMNIDIR:
             print("mono omnidir calibration")
-            reproj_err, self.intrinsics, self.distortion, rvecs, tvecs = cv2.omnidir.calibrate(
-                opts, ipts, self.size, intrinsics_in, 
-                None, flags = self.omnidir_calib_flags)
+            # import pdb; pdb.set_trace()
+            ipts64 = numpy.asarray(ipts, dtype=numpy.float32)
+            ipts = ipts64
+            opts64 = numpy.asarray(opts, dtype=numpy.float32)
+            opts = opts64
+            reproj_err, self.intrinsics, _, self.distortion, rvecs, tvecs = cv2.omnidir.calibrate(
+                opts, ipts, self.size, K=None, 
+                xi=None, D=None, flags = self.omnidir_calib_flags, criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 1e-6))
+
         # R is identity matrix for monocular calibration
         self.R = numpy.eye(3, dtype=numpy.float64)
         self.P = numpy.zeros((3, 4), dtype=numpy.float64)

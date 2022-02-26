@@ -36,6 +36,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cmath>
 #include <limits>
+#include <opencv2/calib3d.hpp>
 
 namespace stereo_image_proc {
 

@@ -44,7 +44,7 @@
 #include <image_geometry/pinhole_camera_model.h>
 #include <boost/thread.hpp>
 #include <depth_image_proc/depth_traits.h>
-
+#include <opencv2/calib3d.hpp>
 #include <sensor_msgs/point_cloud2_iterator.h>
 
 namespace depth_image_proc {
